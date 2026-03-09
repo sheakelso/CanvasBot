@@ -13,6 +13,7 @@ public class SlashCommands
         _commands.Add(new CanvasURLCommand());
         _commands.Add(new UserTokenCommand());
         _commands.Add(new CoursesCommand());
+        _commands.Add(new ChannelCommand());
     }
     
     public ICommand[] Commands => _commands.ToArray();

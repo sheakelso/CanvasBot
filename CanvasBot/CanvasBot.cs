@@ -126,4 +126,20 @@ public class CanvasBot
     }
 
     public GuildInfo GetGuildInfo(ulong guildId) => _serverData[guildId];
+
+    public async Task CheckForAnnouncements()
+    {
+        while (true)
+        {
+            await Task.Delay(60000);
+            foreach (SocketGuild guild in _client.Guilds)
+            {
+                GuildInfo guildInfo = GetGuildInfo(guild.Id);
+                foreach (GuildUserInfo userInfo in guildInfo.GetUsers())
+                {
+                           
+                }
+            }
+        }
+    }
 }
