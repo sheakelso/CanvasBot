@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CanvasBot", "CanvasBot\CanvasBot.csproj", "{15BE2735-8A28-461C-B5E2-45213EBE136C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CanvasAPI", "CanvasAPI\CanvasAPI.csproj", "{8C3240EA-9550-4F86-8581-27B2D2E59D97}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15BE2735-8A28-461C-B5E2-45213EBE136C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15BE2735-8A28-461C-B5E2-45213EBE136C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15BE2735-8A28-461C-B5E2-45213EBE136C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15BE2735-8A28-461C-B5E2-45213EBE136C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C3240EA-9550-4F86-8581-27B2D2E59D97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C3240EA-9550-4F86-8581-27B2D2E59D97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C3240EA-9550-4F86-8581-27B2D2E59D97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C3240EA-9550-4F86-8581-27B2D2E59D97}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

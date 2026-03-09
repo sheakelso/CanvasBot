@@ -1,0 +1,3 @@
+[submodule "CanvasAPI"]
+	path = CanvasAPI
+	url = https://github.com/sheakelso/CanvasAPI.git
