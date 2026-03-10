@@ -54,31 +54,7 @@ public class ChannelCommand : ICommand
             }
         }
     }
-
-    public async Task RespondWithCourses(CommandExecutionContext ctx, Course[] courses, ulong userId)
-    {
-        Embed[] embeds = new Embed[courses.Length];
-        for (int i = 0; i < courses.Length; i++)
-        {
-            GuildCourseInfo courseInfo = ctx.GuildInfo.GetCourseInfo(courses[i].ID);
-            embeds[i] = CreateCourseEmbed(courses[i], courseInfo.Color);
-            Console.WriteLine(courses[i].ImageUrl);
-        }
-        
-        await ctx.Command.RespondAsync($"Here the courses for {MentionUtils.MentionUser(userId)}: ", embeds);
-    }
-
-    public Embed CreateCourseEmbed(Course course, Color color)
-    {
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.WithTitle(course.Name);
-        builder.WithUrl(course.Link);
-        builder.WithColor(color);
-        if (course.ImageUrl is { Length: > 0 }) builder.WithImageUrl(course.ImageUrl);
-
-        return builder.Build();
-    }
-
+    
     private static ApplicationCommandProperties BuildCommand()
     {
         SlashCommandBuilder builder = new SlashCommandBuilder();

@@ -31,21 +31,21 @@ public class CoursesCommand : ICommand
         Embed[] embeds = new Embed[courses.Length];
         for (int i = 0; i < courses.Length; i++)
         {
-            GuildCourseInfo courseInfo = ctx.GuildInfo.GetCourseInfo(courses[i].ID);
-            embeds[i] = CreateCourseEmbed(courses[i], courseInfo.Color);
-            Console.WriteLine(courses[i].ImageUrl);
+            GuildCourseInfo courseInfo = ctx.GuildInfo.GetCourseInfo(courses[i].Id);
+            embeds[i] = await CreateCourseEmbed(courses[i], courseInfo.Color);
+            Console.WriteLine(await courses[i].GetImageUrl());
         }
         
         await ctx.Command.RespondAsync($"Here the courses for {MentionUtils.MentionUser(userId)}: ", embeds);
     }
 
-    public Embed CreateCourseEmbed(Course course, Color color)
+    public async Task<Embed> CreateCourseEmbed(Course course, Color color)
     {
         EmbedBuilder builder = new EmbedBuilder();
-        builder.WithTitle(course.Name);
-        builder.WithUrl(course.Link);
+        builder.WithTitle(await course.GetName());
         builder.WithColor(color);
-        if (course.ImageUrl is { Length: > 0 }) builder.WithImageUrl(course.ImageUrl);
+        string? imageUrl = await course.GetImageUrl();
+        if (imageUrl is { Length: > 0 }) builder.WithImageUrl(imageUrl);
 
         return builder.Build();
     }

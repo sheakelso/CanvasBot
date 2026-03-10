@@ -5,7 +5,7 @@ namespace CanvasBot;
 
 public class GuildUserInfo
 {
-    [JsonIgnore] public GuildInfo Guild { get; private set; }
+    [JsonIgnore] public GuildInfo Guild { get; set; }
     public ulong UserId { get; private set; }
     public string? Token { get; set; }
     

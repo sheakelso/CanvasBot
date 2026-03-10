@@ -1,3 +1,4 @@
+using CanvasAPI;
 using Newtonsoft.Json;
 
 namespace CanvasBot;
@@ -55,4 +56,19 @@ public class GuildInfo
     }
     
     public GuildCourseInfo[] GetCourses() => Courses.Values.ToArray();
+
+    public CanvasClient? CreateCanvasClient(string token)
+    {
+        Console.WriteLine($"Creating canvas client: {token}");
+        if (CanvasUrl == null) return null;
+        return new CanvasClient(CanvasUrl.ToString(), token);
+    }
+
+    public void SetUsersGuild()
+    {
+        foreach (var user in Users.Values)
+        {
+            user.Guild = this;
+        }
+    }
 }

@@ -1,3 +1,4 @@
+using CanvasAPI;
 using Discord;
 using Discord.WebSocket;
 
@@ -22,6 +23,22 @@ public class UserTokenCommand : ICommand
 
                     GuildUserInfo user = ctx.GuildInfo.GetUserInfo(ctx.Command.User.Id);
                     user.Token = token;
+
+                    CanvasClient? client = user.CreateCanvasClient();
+                    if (client == null)
+                    {
+                        await ctx.Command.RespondAsync("Canvas token was invalid.");
+                        user.Token = null;
+                        return;
+                    }
+                    
+                    Course[]? allCourses = await client.GetAllCourses();
+                    if (allCourses == null)
+                    {
+                        await ctx.Command.RespondAsync("Canvas token was invalid.");
+                        user.Token = null;
+                        return;
+                    }
                     
                     await ctx.Command.RespondAsync("Your Canvas token has been set.");
                     return;
