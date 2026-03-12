@@ -20,6 +20,11 @@ public class CoursesCommand : ICommand
                 if (client != null)
                 {
                     Course[]? courses = await client.GetAllCourses();
+                    if (courses == null)
+                    {
+                        await ctx.Command.RespondAsync("Failed to get courses.");
+                        return;
+                    }
                     await RespondWithCourses(ctx, courses, user.Id);
                 }
             }
@@ -31,22 +36,22 @@ public class CoursesCommand : ICommand
         Embed[] embeds = new Embed[courses.Length];
         for (int i = 0; i < courses.Length; i++)
         {
-            GuildCourseInfo courseInfo = ctx.GuildInfo.GetCourseInfo(courses[i].Id);
-            embeds[i] = await CreateCourseEmbed(courses[i], courseInfo.Color);
-            Console.WriteLine(await courses[i].GetImageUrl());
+            GuildCourseInfo? courseInfo = ctx.CurrentGuild.GetCourseById(courses[i].Id);
+            if (courseInfo == null) continue;
+            embeds[i] = CreateCourseEmbed(courses[i], courseInfo.Color);
         }
         
         await ctx.Command.RespondAsync($"Here the courses for {MentionUtils.MentionUser(userId)}: ", embeds);
     }
 
-    public async Task<Embed> CreateCourseEmbed(Course course, Color color)
+    public Embed CreateCourseEmbed(Course course, Color color)
     {
         EmbedBuilder builder = new EmbedBuilder();
-        builder.WithTitle(await course.GetName());
+        builder.WithTitle(course.name);
         builder.WithColor(color);
-        string? imageUrl = await course.GetImageUrl();
+        builder.WithUrl(course.Link);
+        string? imageUrl = course.imageUrl;
         if (imageUrl is { Length: > 0 }) builder.WithImageUrl(imageUrl);
-
         return builder.Build();
     }
 

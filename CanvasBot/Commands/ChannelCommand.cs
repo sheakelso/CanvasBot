@@ -29,7 +29,7 @@ public class ChannelCommand : ICommand
                 {
                     if (channelOption.Value is SocketGuildChannel channel)
                     {
-                        ctx.GuildInfo.Channels[type] = channel.Id;
+                        ctx.CurrentGuild.Channels[type] = channel.Id;
                         await ctx.Command.RespondAsync($"Canvas channel '{Enum.GetName(type)}' is set to {MentionUtils.MentionChannel(channel.Id)}.");
                         return;
                     }
@@ -45,7 +45,7 @@ public class ChannelCommand : ICommand
             {
                 int intType = Convert.ToInt32(channelTypeOption.Value);
                 ChannelType type = (ChannelType)intType;
-                if (ctx.GuildInfo.Channels.TryGetValue(type, out var channel))
+                if (ctx.CurrentGuild.Channels.TryGetValue(type, out var channel))
                 {
                     await ctx.Command.RespondAsync($"Canvas channel '{Enum.GetName(type)}' is set to {MentionUtils.MentionChannel(channel)}.");
                     return;

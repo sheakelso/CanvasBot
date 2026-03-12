@@ -35,7 +35,7 @@ public class CanvasURLCommand : ICommand
         switch (subCommand.Name)
         {
             case "get":
-                Uri? canvasUrl = ctx.GuildInfo.CanvasUrl;
+                Uri? canvasUrl = ctx.CurrentGuild.CanvasUrl;
                 if(canvasUrl != null) await command.RespondAsync($"This server's Canvas URL is '{canvasUrl.ToString()}'.");
                 else  await command.RespondAsync("No Canvas URL has been set.");
                 break;
@@ -45,7 +45,7 @@ public class CanvasURLCommand : ICommand
                     subCommand.Options.FirstOrDefault(o => o.Name == "url");
                 if (urlData != null)
                 {
-                    bool success = ctx.GuildInfo.SetCanvasUrl((string)urlData.Value);
+                    bool success = ctx.CurrentGuild.SetCanvasUrl((string)urlData.Value);
                     if (success) await command.RespondAsync($"Canvas URL set to '{(string)urlData.Value}'.");
                     else await command.RespondAsync($"Provided url '{(string)urlData.Value}' is invalid.");
                     return;

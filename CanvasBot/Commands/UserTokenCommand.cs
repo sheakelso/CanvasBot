@@ -18,30 +18,16 @@ public class UserTokenCommand : ICommand
                 SocketSlashCommandDataOption? tokenData = subcommand.Options.FirstOrDefault(o => o.Name == "token");
                 if (tokenData != null)
                 {
+                    await ctx.Command.DeferAsync(true);
                     string token = (string)tokenData.Value;
                     token = token.Trim();
 
-                    GuildUserInfo user = ctx.GuildInfo.GetUserInfo(ctx.Command.User.Id);
-                    user.Token = token;
+                    GuildUserInfo user = ctx.CurrentGuild.GetOrCreateUserInfo(ctx.Command.User.Id);
 
-                    CanvasClient? client = user.CreateCanvasClient();
-                    if (client == null)
-                    {
-                        await ctx.Command.RespondAsync("Canvas token was invalid.");
-                        user.Token = null;
-                        return;
-                    }
+                    bool valid = await user.TrySetToken(token);
                     
-                    Course[]? allCourses = await client.GetAllCourses();
-                    if (allCourses == null)
-                    {
-                        await ctx.Command.RespondAsync("Canvas token was invalid.");
-                        user.Token = null;
-                        return;
-                    }
-                    
-                    await ctx.Command.RespondAsync("Your Canvas token has been set.");
-                    return;
+                    if(valid) await ctx.Command.ModifyOriginalResponseAsync(properties => properties.Content = "Your Canvas token has been set.");
+                    else await ctx.Command.ModifyOriginalResponseAsync(properties => properties.Content = "Failed to set Canvas token. The Canvas URL or token may be invalid.");
                 }
 
                 await ctx.Command.RespondAsync("You must provide your Canvas token.");

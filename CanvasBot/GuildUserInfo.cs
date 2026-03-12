@@ -1,23 +1,101 @@
 using CanvasAPI;
+using Discord.WebSocket;
 using Newtonsoft.Json;
 
 namespace CanvasBot;
 
 public class GuildUserInfo
 {
-    [JsonIgnore] public GuildInfo Guild { get; set; }
-    public ulong UserId { get; private set; }
-    public string? Token { get; set; }
+    [JsonIgnore] public GuildInfo GuildInfo { get; private set; }
+    [JsonProperty] public ulong UserId { get; private set; }
+
+    [JsonProperty] public string? Token { get; private set; }
+
+    [JsonIgnore] private DiscordSocketClient _client;
     
-    public GuildUserInfo(ulong userId, GuildInfo guild)
+    [JsonIgnore] public SocketGuildUser? GuildUser => GuildInfo.Guild.GetUser(UserId);
+
+    [JsonConstructor]
+    public GuildUserInfo() { }
+
+    public async Task<GuildCourseInfo[]?> GetCourses()
     {
+        CanvasClient? canvasClient = CreateCanvasClient();
+        if(canvasClient == null) return null;
+
+        Course[]? canvasCourses = await canvasClient.GetAllCourses();
+        if(canvasCourses == null) return null;
+        
+        List<GuildCourseInfo> courses = new List<GuildCourseInfo>();
+        foreach (Course course in canvasCourses)
+        {
+            courses.Add(await GuildInfo.GetOrCreateCourseInfo(course));
+        }
+        
+        return courses.ToArray();
+    }
+    
+    public GuildUserInfo(DiscordSocketClient client, ulong userId, GuildInfo guildInfo)
+    {
+        _client = client;
         UserId = userId;
-        Guild = guild;
+        GuildInfo = guildInfo;
+    }
+
+    public void Initialize(DiscordSocketClient client, GuildInfo guild)
+    {
+        _client = client;
+        GuildInfo = guild;
+    }
+
+    public async Task Refresh()
+    {
+        await RefreshCourses();
+    }
+
+    private async Task<bool> RefreshCourses()
+    {
+        GuildCourseInfo[]? courses = await GetCourses();
+        SocketGuildUser? guildUser = GuildUser;
+        if (courses == null || guildUser == null) return false;
+
+        foreach (GuildCourseInfo course in courses)
+        {
+            if (guildUser.Roles.Count(role => role.Id == course.RoleId) == 0)
+            {
+                await guildUser.AddRoleAsync(course.RoleId);
+            }
+
+            if (Token != null)
+            {
+                if (!course.HasToken(Token))
+                {
+                    course.AddToken(Token);
+                }
+            }
+        }
+
+        return true;
     }
 
     public CanvasClient? CreateCanvasClient()
     {
-        if(Guild.CanvasUrl == null || Token == null) return null;
-        return new CanvasClient(Guild.CanvasUrl.ToString(), Token);
+        if(GuildInfo.CanvasUrl == null || Token == null) return null;
+        return new CanvasClient(GuildInfo.CanvasUrl.ToString(), Token);
+    }
+
+    public async Task<bool> TrySetToken(string token)
+    {
+        Token = token;
+        
+        GuildCourseInfo[]? courses = await GetCourses();
+        if (courses == null)
+        {
+            Token = null;
+            return false;
+        }
+
+        await RefreshCourses();
+        return true;
     }
 }

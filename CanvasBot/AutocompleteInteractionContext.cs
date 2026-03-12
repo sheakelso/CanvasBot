@@ -3,16 +3,16 @@ using Discord.WebSocket;
 
 namespace CanvasBot;
 
-public class CommandExecutionContext
+public class AutocompleteInteractionContext
 {
-    public readonly SocketSlashCommand Command;
+    public readonly SocketAutocompleteInteraction Interaction;
     public readonly GuildData Data;
     public readonly GuildInfo CurrentGuild;
     private readonly Dictionary<ulong, CanvasClient> _canvasClients = new();
 
-    public CommandExecutionContext(SocketSlashCommand command, GuildData data, GuildInfo currentGuild)
+    public AutocompleteInteractionContext(SocketAutocompleteInteraction interaction, GuildData data, GuildInfo currentGuild)
     {
-        Command = command;
+        Interaction = interaction;
         Data = data;
         CurrentGuild = currentGuild;
         
