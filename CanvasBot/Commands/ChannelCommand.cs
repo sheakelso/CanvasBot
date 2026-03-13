@@ -31,6 +31,7 @@ public class ChannelCommand : ICommand
                     {
                         ctx.CurrentGuild.Channels[type] = channel.Id;
                         await ctx.Command.RespondAsync($"Canvas channel '{Enum.GetName(type)}' is set to {MentionUtils.MentionChannel(channel.Id)}.");
+                        ctx.Data.Save();
                         return;
                     }
                 }

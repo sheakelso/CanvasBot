@@ -46,7 +46,11 @@ public class CanvasURLCommand : ICommand
                 if (urlData != null)
                 {
                     bool success = ctx.CurrentGuild.SetCanvasUrl((string)urlData.Value);
-                    if (success) await command.RespondAsync($"Canvas URL set to '{(string)urlData.Value}'.");
+                    if (success)
+                    {
+                        await command.RespondAsync($"Canvas URL set to '{(string)urlData.Value}'.");
+                        ctx.Data.Save();
+                    }
                     else await command.RespondAsync($"Provided url '{(string)urlData.Value}' is invalid.");
                     return;
                 }

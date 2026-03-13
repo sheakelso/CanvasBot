@@ -62,6 +62,47 @@ public class CourseCommand : IAutocompleteCommand
                 await ctx.Command.RespondAsync($"Provided hex code '{hex}' was formatted incorrectly.");
             }
         }
+        
+        SocketSlashCommandDataOption? announcementOption = ctx.Command.Data.Options.FirstOrDefault(o => o.Name == "announcement");
+        if (announcementOption != null)
+        {
+            SocketSlashCommandDataOption? courseIdOption = announcementOption.Options.FirstOrDefault(o => o.Name == "course-id");
+
+            if (courseIdOption != null)
+            {
+                string courseId = (string)courseIdOption.Value;
+                GuildCourseInfo? courseInfo = ctx.CurrentGuild.GetCourseById(courseId);
+                if (courseInfo == null)
+                {
+                    await ctx.Command.RespondAsync("Unable to find course.");
+                    return;
+                }
+
+                Course? course = await courseInfo.GetCourse();
+                if (course == null)
+                {
+                    await ctx.Command.RespondAsync("Unable to find course.");
+                    return;
+                }
+                
+                Dictionary<string, Discussion>? announcements = await course.GetDiscussions(last: 1);
+                if (announcements is not { Count: > 0 })
+                {
+                    await ctx.Command.RespondAsync("This course has no announcements.");
+                    return;
+                }
+
+                Discussion announcement = announcements.Last().Value;
+                Embed? embed = await AnnouncementUtils.CreateAnnouncementEmbed(courseInfo, announcement);
+                if (embed != null)
+                {
+                    await ctx.Command.RespondAsync(embed: embed);
+                    return;
+                }
+                
+                await ctx.Command.RespondAsync("An unknown error occured.");
+            }
+        }
     }
 
     public async Task ExecuteAutocomplete(AutocompleteInteractionContext ctx)
@@ -106,7 +147,7 @@ public class CourseCommand : IAutocompleteCommand
     {
         SlashCommandOptionBuilder courseBuilder = new SlashCommandOptionBuilder();
         courseBuilder.WithName("course-id");
-        courseBuilder.WithDescription("ID of the course you want to edit.");
+        courseBuilder.WithDescription("ID of the course.");
         courseBuilder.WithType(ApplicationCommandOptionType.String);
         courseBuilder.WithAutocomplete(true);
         courseBuilder.WithRequired(true);
@@ -136,12 +177,21 @@ public class CourseCommand : IAutocompleteCommand
         colorBuilder.WithType(ApplicationCommandOptionType.SubCommand);
         colorBuilder.AddOption(courseBuilder);
         colorBuilder.AddOption(colorValueBuilder);
+
+        SlashCommandOptionBuilder announcementBuilder = new SlashCommandOptionBuilder();
+        announcementBuilder.WithName("announcement");
+        announcementBuilder.WithDescription("View the most recent announcement for a course.");
+        announcementBuilder.WithType(ApplicationCommandOptionType.SubCommand);
+        announcementBuilder.AddOption(courseBuilder);
+        
         
         SlashCommandBuilder builder = new SlashCommandBuilder();
         builder.WithName("course");
-        builder.WithDescription("Edit course settings.");
+        builder.WithDescription("Course commands.");
         builder.AddOption(nicknameBuilder);
         builder.AddOption(colorBuilder);
+        builder.AddOption(announcementBuilder);
+        
         
         return builder.Build();
     }

@@ -18,6 +18,16 @@ public class GuildData
         LoadData();
     }
 
+    public void RemoveGuild(SocketGuild guild)
+    {
+        _guildInfos.Remove(guild.Id);
+    }
+    
+    public void RemoveGuild(ulong id)
+    {
+        _guildInfos.Remove(id);
+    }
+
     private void LoadData()
     {
         if(!File.Exists(_dataFileName)) File.Create(_dataFileName).Close();
@@ -54,7 +64,8 @@ public class GuildData
     {
         foreach (GuildInfo guildInfo in _guildInfos.Values)
         {
-            await guildInfo.Refresh();
+            if(_client.Guilds.Count(guild => guild.Id == guildInfo.GuildId) == 0) RemoveGuild(guildInfo.GuildId);
+            else await guildInfo.Refresh();
         }
     }
 

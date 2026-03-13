@@ -34,6 +34,16 @@ public class GuildUserInfo
         
         return courses.ToArray();
     }
+
+    public async Task<GuildCourseInfo?> GetCourseById(string id)
+    {
+        CanvasClient? canvasClient = CreateCanvasClient();
+        if(canvasClient == null) return null;
+
+        Course? course = await canvasClient.GetNode<Course>(id);
+        if (course != null) return await GuildInfo.GetOrCreateCourseInfo(course);
+        return null;
+    }
     
     public GuildUserInfo(DiscordSocketClient client, ulong userId, GuildInfo guildInfo)
     {

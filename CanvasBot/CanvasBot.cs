@@ -23,6 +23,8 @@ public class CanvasBot
         _client.Ready += OnReady;
         _client.SlashCommandExecuted += OnSlashCommandExecuted;
         _client.AutocompleteExecuted += OnAutocompleteExecuted;
+        _client.LeftGuild += OnLeftGuild;
+        _client.ButtonExecuted += OnButtonExecuted;
 
         _data = new GuildData(_client, dataFileName);
 
@@ -46,6 +48,12 @@ public class CanvasBot
     private Task Log(LogMessage message)
     {
         Console.WriteLine(message.ToString());
+        return Task.CompletedTask;
+    }
+
+    private Task OnLeftGuild(SocketGuild guild)
+    {
+        _data.RemoveGuild(guild);
         return Task.CompletedTask;
     }
     
@@ -115,15 +123,12 @@ public class CanvasBot
                 await MakeAnnouncement(course, announcement);
             }
         }
+        if(newAnnouncements.Count > 0) _data.Save();
     }
-
-    
 
     private async Task MakeAnnouncement(GuildCourseInfo courseInfo, Discussion announcement)
     {
         GuildInfo guildInfo = courseInfo.GuildInfo;
-        Course? course = await courseInfo.GetCourse();
-        if(course == null) return;
         
         if (guildInfo.Channels.TryGetValue(ChannelType.Announcements, out ulong channelId))
         {
@@ -131,64 +136,55 @@ public class CanvasBot
             SocketGuildChannel channel = guild.GetChannel(channelId);
             if (channel is IMessageChannel messageChannel)
             {
-                User? author = await announcement.GetAuthor();
-                string? message = await announcement.GetMessage();
-                string title = announcement.title;
-                if (author == null || message == null) return;
+                Embed? embed = await AnnouncementUtils.CreateAnnouncementEmbed(courseInfo, announcement);
+                if (embed == null) return;
                 
-                EmbedBuilder embed = new EmbedBuilder();
-                embed.WithTitle(course.name);
-                embed.WithColor(courseInfo.Color);
-                embed.WithAuthor(author.name, author.avatarUrl);
-                embed.WithDescription(CreateAnnouncementBody(title, message, announcement.Link));
-                embed.WithFooter("Canvas",
-                    "https://du11hjcvx0uqb.cloudfront.net/dist/images/canvas_logomark_only@2x-e197434829.png");
+                ComponentBuilder componentBuilder = new ComponentBuilder();
+                componentBuilder.WithButton("Mark as Read", "read" + announcement.Id);
                 
-                if (announcement.postedAt != null) embed.WithTimestamp(announcement.postedAt.Value);
-                
-                await messageChannel.SendMessageAsync(embed: TruncateEmbed(embed).Build());
+                await messageChannel.SendMessageAsync(MentionUtils.MentionRole(courseInfo.RoleId), embed: embed, components: componentBuilder.Build());
             }
         }
-        
     }
 
-    private string CreateAnnouncementBody(string title, string htmlMessage, string url)
+    private async Task OnButtonExecuted(SocketMessageComponent component)
     {
-        string messageText = HtmlUtils.GetHtmlText(htmlMessage);
-        return TruncateString($"### [{title}]({url})\n\n{messageText}", EmbedBuilder.MaxDescriptionLength);
-    }
-
-    private EmbedBuilder TruncateEmbed(EmbedBuilder embed)
-    {
-        int totalCharacters = 0;
-        
-        embed.Title = TruncateString(embed.Title, EmbedBuilder.MaxTitleLength);
-        embed.Description = TruncateString(embed.Description, EmbedBuilder.MaxDescriptionLength);
-        totalCharacters += embed.Title.Length;
-        totalCharacters += embed.Description.Length;
-        
-        if (embed.Author != null)
+        if (component.Data.CustomId.StartsWith("read"))
         {
-            embed.Author.Name = TruncateString(embed.Author.Name, EmbedAuthorBuilder.MaxAuthorNameLength);
-            totalCharacters += embed.Author.Name.Length;
-        }
+            ulong? guildId = component.GuildId;
+            if (guildId == null)
+            {
+                await component.RespondAsync("This command must be used within a server.", ephemeral: true);
+                return;
+            }
+            
+            GuildInfo? guildInfo = _data.GetGuildInfoById(guildId.Value);
+            if (guildInfo == null)
+            {
+                await component.RespondAsync("No user token set.", ephemeral: true);
+                return;
+            }
 
-        if (embed.Footer != null)
-        {
-            embed.Footer.Text = TruncateString(embed.Footer.Text, EmbedFooterBuilder.MaxFooterTextLength);
-            totalCharacters += embed.Footer.Text.Length;
-        }
-        
-        if(totalCharacters > 6000) embed.Title = TruncateString(embed.Description, 6000 - embed.Title.Length - embed.Author.Name.Length -embed.Footer.Text.Length);
-        Console.WriteLine(totalCharacters);
-        return embed;
-    }
+            GuildUserInfo guildUserInfo = guildInfo.GetOrCreateUserInfo(component.User.Id);
+            CanvasClient? canvasClient = guildUserInfo.CreateCanvasClient();
+            if (canvasClient == null)
+            {
+                await component.RespondAsync("No user token set.", ephemeral: true);
+                return;
+            }
+            
+            string discussionId = component.Data.CustomId.Replace("read", "");
+            Discussion? discussion = await canvasClient.GetNode<Discussion>(discussionId);
+            if (discussion == null)
+            {
+                await component.RespondAsync("You do not have access to this discussion.", ephemeral: true);
+                return;
+            }
 
-    private string TruncateString(string? str, int maxLength)
-    {
-        if (str == null) return "";
-        if(str.Length > maxLength) return str.Substring(0, maxLength - 3) + "...";
-        return str;
+            bool success = await discussion.SetReadState(true);
+            if(!success) await component.RespondAsync("An error occured.", ephemeral: true);
+            else await component.RespondAsync("Announcement marked as read.", ephemeral: true);
+        }
     }
 
     private async Task DeleteAllRoles()
